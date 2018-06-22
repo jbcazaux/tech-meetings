@@ -1,0 +1,275 @@
+<!doctype html>
+<html>
+<head>
+    <META NAME="ROBOTS" CONTENT="INDEX, FOLLOW">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="description" content="Formation Webpack"/>
+    <meta name="keywords"
+          content="formation webpack"/>
+    <link rel="canonical" href="http://codox.fr/formation-webpack"/>
+    <title>Generators ES6</title>
+    <link href="https://google.com/+JeanBaptisteCazaux" rel="publisher"/>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="slides/css/reveal.css">
+    <link rel="stylesheet" href="slides/css/theme/black.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="slides/lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'slides/css/print/pdf.css' : 'slides/css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+    <style type="text/css">
+        p {
+            text-align: left;
+        }
+
+        .fragment.current-visible.visible:not(.current-fragment) {
+            display: none;
+            height: 0px;
+            line-height: 0px;
+            font-size: 0px;
+        }
+
+        .reveal h3, .reveal h4 {
+            text-transform: none;
+        }
+
+        .reveal pre code {
+            max-height: 530px;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h1>ES6 Generators</h1>
+            <p style="text-align: center"><a target="_blank" href="http://twitter.com/jbcazaux">@jbcazaux</a></p>
+            </p>
+        </section>
+        <section>
+            <h3>Generators</h3>
+            <pre><code data-trim>
+            function* fooGenerator() {
+                yield 'a';
+                yield 'b';
+                yield 42;
+                return 'bye';
+            }
+
+            for (const val of fooGenerator()) {
+                console.log(val);
+            }
+            </code></pre>
+            <pre class="fragment"><code data-trim>
+            const it = fooGenerator();
+            console.log(it.next()); // Object {value: "a", done: false}
+            console.log(it.next()); // Object {value: "b", done: false}
+            console.log(it.next()); // Object {value: 42, done: false}
+            console.log(it.next()); // Object {value: "bye", done: true}
+            console.log(it.next()); // Object {value: undefined, done: true}
+            </code></pre>
+        </section>
+        <section>
+            <h3>Generators</h3>
+            <pre><code data-trim>
+            function* barGenerator() {
+                const a = yield 'a';
+                console.log('a:', a);
+                const b = yield 'b';
+                console.log('b:', b);
+                const c = yield 'c';
+                console.log('c:', c);
+                return 'good bye';
+            }
+            for (const val of barGenerator()) {
+                console.log(val);
+            }
+            // output ?
+            </code></pre>
+        </section>
+        <section>
+            <h3>Generators</h3>
+            <pre><code data-trim>
+            function* qixGenerator(x) {
+                console.log('start');
+                const a = yield x + 1;
+                console.log('a:', a);
+                return 'good bye';
+            }
+
+            const it = qixGenerator(5);
+            console.log(it.next()); // Object {value: 6, done: false}
+            console.log(it.next(100)); // ?
+            </code></pre>
+            <pre class="fragment"><code data-trim>
+                // 100 - Object {value: "good bye", done: true}
+            </code></pre>
+        </section>
+        <section>
+            <h3>Communiquer avec le générateur</h3>
+            <pre><code data-trim>
+            function* gen() {
+              console.log('start');
+              while(true) {
+                try {
+                   const result = yield 42;
+                   console.log('result:', result);
+                } catch(e) {
+                  console.log('Error caught!');
+                }
+              }
+            }
+
+            const g = gen();
+            g.next('coucou !');
+            g.next('hello !');
+            g.throw(new Error('Something went wrong'));
+            </code></pre>
+        </section>
+        <section>
+            <h3>Utilisations</h3>
+            <pre><code data-trim>
+            function* randomGenerator(max) {
+                while(true) {
+                    yield Math.floor(Math.random() * max)
+                }
+            }
+
+            const it = randomGenerator(100);
+            console.log(it.next());
+            </code></pre>
+        </section>
+        <section>
+            <h3>Utilisations</h3>
+            <pre><code data-trim>
+            function* randomGenerator(max) {
+              while(true) {
+                yield Math.floor(Math.random() * max)
+              }
+            }
+
+            function* counter() {
+              yield 1;
+              yield 2;
+              yield* randomGenerator(100);
+              yield 4;
+            }
+
+            const iterator = counter();
+
+            for (let i = 0; i < 10; i++) {
+                console.log(iterator.next().value);
+            }
+            </code></pre>
+        </section>
+        <section>
+            <h3>Utilisations</h3>
+            <pre class="fragment current-visible"><code data-trim>
+            function* doSomething(){
+                const content = yield fetchSomeContent();
+                console.log(content);
+            }
+            </code></pre>
+            <pre class="fragment current-visible"><code data-trim>
+            const co = require('co');
+            co(function *(){
+                const content = yield fetchSomeContent();
+                console.log(content);
+            }).catch(onerror);
+            </code></pre>
+            <pre class="fragment"><code data-trim>
+            const co = require('co');
+
+            co(function *(){
+              const a = Promise.resolve(1);
+              const b = Promise.resolve(2);
+              const c = Promise.resolve(3);
+              const res = yield [a, b, c];
+              console.log(res); // => [1, 2, 3]
+            }).catch(onerror);
+            </code></pre>
+        </section>
+        <section>
+            <h3>Sagas</h3>
+            <pre><code data-trim>
+            export function* loadItems() {
+                const items = yield call(fetch, '/items');
+                yield put({type: 'SET_ITEMS', items: items});
+            }
+            </code></pre>
+            <pre><code data-trim>
+                export function* loadCharts(action) {
+                    const user = yield call(fetch, '/user/' + action.userId);
+                    if (user.isPremium()) {
+                        const data = yield call(fetchPremiumChartsData);
+                        yield put({type: 'SET_CHARTS_DATA', data: data});
+                    }
+                    else {
+                        const data = yield call(fetchBasicChartsData);
+                        yield put({type: 'SET_CHARTS_DATA', data});
+                    }
+                }
+            </code></pre>
+        </section>
+        <section>
+            <h3>Sagas</h3>
+            <h4>Annuler une tâche</h4>
+            <pre><code data-trim>
+            function* main() {
+                while ( yield take('START_DATE_SYNC')) {
+                    const task = yield fork(dateSync);
+                    yield take('STOP_DATE_SYNC')
+                    yield cancel(task)
+                } // recommence à écouter 'START_DATE_SYNC'
+            }
+            function* dateSync() {
+                try {
+                    while (true) {
+                        const d = yield call(fetchDate);
+                        yield put(setCurrentDate(d));
+                        yield call(delay, 1000);
+                    }
+                } finally {
+                        if (yield cancelled()) {
+                            yield put(setCurrentDate(0));
+                        }
+                }
+            }
+            </code></pre>
+        </section>
+        <section>
+            <h3>Let's do it !</h3>
+
+            <h3>help ? <a href="mailto:jbcazaux@gmail.com">jbcazaux@gmail.com</a></h3>
+        </section>
+    </div>
+</div>
+
+<script src="slides/lib/js/head.min.js"></script>
+<script src="slides/js/reveal.js"></script>
+
+<script>
+    Reveal.initialize({
+        dependencies: [
+            {src: 'slides/plugin/markdown/marked.js'},
+            {src: 'slides/plugin/markdown/markdown.js'},
+            {src: 'slides/plugin/notes/notes.js', async: true},
+            {
+                src: 'slides/plugin/highlight/highlight.js', async: true, callback: function () {
+                    hljs.initHighlightingOnLoad();
+                }
+            }
+        ]
+    });
+</script>
+</body>
+</html>
